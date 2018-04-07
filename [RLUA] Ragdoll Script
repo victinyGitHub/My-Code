@@ -1,0 +1,86 @@
+target = "Player1"
+
+lplr = game:service("Players")[target]
+
+function Iterate(instance, func)
+	for i, v in next, instance:GetChildren() do
+		func(v)
+	end
+end
+
+limbs = {
+	["Right Leg"] = true;
+	["Right Arm"] = true;
+	["Left Leg"] = true;
+	["Left Arm"] = true;
+	
+}
+
+Iterate(lplr.Character, function(v)
+	if v:IsA("BasePart") then
+		local attachment = Instance.new("Attachment")
+		attachment.Parent = v
+		attachment.Name = (v.Name .. "[Attachment]")
+		if limbs[v.Name] then
+			attachment.Position = Vector3.new(0, v.Size.Y/2, 0)
+		elseif v.Name == "Head" then
+			attachment.Position = Vector3.new(0, -v.Size.Y/2, 0)
+			attachment.Rotation = Vector3.new(0, 0, -90)
+		end
+	end
+end)
+
+local leftLegAttachment = Instance.new("Attachment")
+leftLegAttachment.Position = Vector3.new(-.5, -1, 0)
+leftLegAttachment.Rotation = Vector3.new(0, -90, 0)
+
+local rightLegAttachment = Instance.new("Attachment")
+rightLegAttachment.Position = Vector3.new(.5, -1, 0)
+rightLegAttachment.Rotation = Vector3.new(0, -90, 0)
+
+rightLegAttachment.Parent, leftLegAttachment.Parent = lplr.Character.Torso, lplr.Character.Torso
+
+jointAttachments = {
+	['Head'] = {
+		['Attachment0'] = lplr.Character.Torso['NeckAttachment'];
+		['Attachment1'] = lplr.Character.Head['Head[Attachment]'];
+	};
+	['Left Arm'] = {
+		['Attachment0'] = lplr.Character.Torso['LeftCollarAttachment'];
+		['Attachment1'] = lplr.Character['Left Arm']['Left Arm[Attachment]'];
+	};
+	['Right Arm'] = {
+		['Attachment0'] = lplr.Character.Torso['RightCollarAttachment'];
+		['Attachment1'] = lplr.Character['Right Arm']['Right Arm[Attachment]'];
+	};
+	['Left Leg'] = {
+		['Attachment0'] = leftLegAttachment;
+		['Attachment1'] = lplr.Character['Left Leg']['Left Leg[Attachment]'];
+	};
+	['Right Leg'] = {
+		['Attachment0'] = rightLegAttachment;
+		['Attachment1'] = lplr.Character['Right Leg']['Right Leg[Attachment]'];
+	};
+}
+
+Iterate(lplr.Character, function(v)
+	if v:IsA("BasePart") then
+		if jointAttachments[v.Name] then
+			local ballSocketJoint = Instance.new("BallSocketConstraint")
+			ballSocketJoint.Parent = v
+			ballSocketJoint.Radius = 0.15
+			ballSocketJoint.Attachment0, ballSocketJoint.Attachment1 = jointAttachments[v.Name]['Attachment0'], jointAttachments[v.Name]['Attachment1']
+			if v.Name == "Head" then
+				ballSocketJoint.LimitsEnabled = true
+				ballSocketJoint.UpperAngle = -180
+			end
+		end
+	end
+end)
+
+Iterate(lplr.Character.Torso, function(v)
+	if v:IsA("Motor") then
+		v:Remove()
+	end
+end)
+lplr.Character.Humanoid.PlatformStand = true
